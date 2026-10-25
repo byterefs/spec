@@ -81,11 +81,11 @@ of 2026-10-25; the full survey with links is in `prior-art/survey-2026-10.md`.
 | Icechunk manifest (spec 2.1) | `index`, `location`, `offset`, `length`; or `inline` (encoded bytes) | Zarr v3 array metadata | inline: `inline` field; missing: no ref (not confirmed in spec text) | `checksum_etag` or `checksum_last_modified`, enforced with conditional requests | Zarr v3 grid |
 | DMR++ | `offset`, `nBytes`, `chunkPositionInArray` (element, not chunk, indices), filter mask | `compressionType` filter pipeline in order | missing: chunk omitted, `fillValue`; inline: `dmrpp:compact` | none | regular |
 | GDAL `GetRawBlockInfo` (since 3.12) | filename, offset, size, driver key/value info, inline data | `COMPRESSION`, `FILTER`, `ENDIANNESS`; Zarr driver adds compressor JSON | missing: all fields empty; inline: data set, filename null | none | the driver's block grid |
-| GDAL `gdal mdim` subcommand (draft, under review) | `dim_0..dim_{n-1}`, `present`, `path`, `offset`, `size`, `info` as an attribute-only vector layer | `info` text per row; codec layer metadata | absent: nulls; inline: planned | none | the array's block grid |
+| GDAL `gdal mdim get-refs` subcommand (draft, OSGeo/gdal PR 14677) | `dim_0..dim_{n-1}`, `present`, `path`, `offset`, `size`, `info` as an attribute-only vector layer | `info` text per row; codec layer metadata | absent: nulls; inline: planned | none | the array's block grid |
 | TIFF / COG | `TileOffsets`, `TileByteCounts` per IFD | TIFF tags (compression, predictor) | sparse tiles: offset and count 0 | none | regular tiles |
 
 Zarr itself has two related proposals: a chunk manifest storage
-transformer (zarr-specs issue 287, status not checked) and the
+transformer (zarr-specs issue 287, open or closed state unverified) and the
 `rectilinear` chunk grid in zarr-extensions, now implemented as
 experimental in zarr-python.
 
@@ -184,7 +184,7 @@ one boundary not yet drawn; see open question 6.
 | 11 | **Chunk keys.** `dim_0 .. dim_{n-1}` integer columns, zero-based, C order, against named dimension columns. | GDAL block-info draft and mdim-refs/0.2 use `dim_i` |
 | 12 | **Lower-rank sources.** A 2D tile placed in a 3D stack; transposes. | mdim-refs/0.2 rule (keys carry the global rank; no permutation); m15 section 3.7 |
 | 13 | **Storage that is not chunked.** HDF5 contiguous datasets, TIFF strips, GRIB messages, files inside zip or gzip wrappers. | wxylib/design m14 section 3 (format classes and harvest cost) |
-| 14 | **Relation to GDAL.** Align column names with GDAL's raw block information output, or define them independently and map. | the GDAL subcommand is under review and its name is not settled; its draft columns are those of mdim-refs/0.2 |
+| 14 | **Relation to GDAL.** Align column names with GDAL's raw block information output, or define them independently and map. | the GDAL subcommand (`gdal mdim get-refs`, PR 14677) is in review and its name may still change; its draft columns are those of mdim-refs/0.2 |
 | 15 | **Name of the format identifier.** `byterefs/0.1` in metadata; whether mdim-refs/0.2 tables are accepted as a legacy identifier. | new |
 
 Each question is closed by a numbered decision record in `decisions/`,
@@ -196,11 +196,15 @@ A version is done when its gate is met, not when its text is written.
 
 **G0: seeded.**
 
-- [ ] Repository created with README, this brief, licences and a
+- [x] Repository created with README, this brief, licences and a
       contributing note.
-- [ ] Decision 0001 (scope, from section 5) and decision 0002 (start from
-      mdim-refs/0.2) written.
-- [ ] Prior art in section 3 checked against primary sources.
+- [x] Decision 0001 (scope, from section 5) and decision 0002 (start from
+      mdim-refs/0.2) written (status proposed; acceptance is a separate
+      pull request, see `decisions/README.md`).
+- [x] Prior art in section 3 checked against primary sources. Note: the
+      open or closed state of zarr-specs issue 287 and OSGeo/gdal pull
+      request 14677 is still unverified; see the verification note in
+      `prior-art/survey-2026-10.md`.
 
 **v0.1: one regular array, from one or more sources.**
 

@@ -1,7 +1,8 @@
 # NNNN: Title
 
 - Status: proposed
-- Date: YYYY-MM-DD
+- Date: YYYY-MM-DD (proposed)
+- Accepted: (date and link to the acceptance pull request, when accepted)
 - Closes: brief question N (if any)
 - Target version: byterefs/0.x
 
