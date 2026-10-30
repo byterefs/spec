@@ -12,7 +12,7 @@ kerchunk references, VirtualiZarr manifests, Icechunk repositories, DMR++ files 
 knowing where each chunk's bytes are. byterefs is the common form those can
 be generated from.
 
-GDAL multidimensional VRTs can be used like *xarray* to logically concatenate series of files into a virtual n-dimensional array that is convenient to harvest bytes from. (Other Python approaches also provide such harvesting but they harvest for bespoke downstream usage which is inconvenient if you aren't wedded to their tooling). 
+GDAL multidimensional VRTs can be used like *xarray* to logically concatenate series of files into a virtual n-dimensional array that is convenient to harvest bytes from. (Other Python approaches also provide such harvesting but they harvest for bespoke downstream usage which can be inconvenient if you aren't wedded to their tooling). Icechunk byte refs are nearly entirely opaque, but can be used as harvesters - we're not saying don't do that, just consider the flat central form championed here. 
 
 
 ## Status
