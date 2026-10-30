@@ -8,10 +8,12 @@ language.
 > A virtual store is not a format. It is a table of byte ranges plus a
 > plan, and every format is a projection of that table.
 
-kerchunk references, VirtualiZarr manifests, Icechunk repositories, GDAL
-multidimensional VRTs, DMR++ files and COG tile indexes all reduce to
+kerchunk references, VirtualiZarr manifests, Icechunk repositories, DMR++ files and COG tile indexes all reduce to
 knowing where each chunk's bytes are. byterefs is the common form those can
 be generated from.
+
+GDAL multidimensional VRTs can be used like *xarray* to logically concatenate series of files into a virtual n-dimensional array that is convenient to harvest bytes from. (Other Python approaches also provide such harvesting but they harvest for bespoke downstream usage which is inconvenient if you aren't wedded to their tooling). 
+
 
 ## Status
 
