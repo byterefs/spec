@@ -2,7 +2,7 @@
 
 - Status: accepted
 - Date: 2026-11-02 (proposed)
-- Accepted: 2026-11-02, ACCEPT_PR
+- Accepted: on merge of [pull request 3](https://github.com/byterefs/spec/pull/3)
 - Closes: brief question 15
 - Target version: byterefs/0.1
 
