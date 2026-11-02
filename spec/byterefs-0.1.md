@@ -9,7 +9,7 @@ Every departure from that text is listed in
 that made it.
 
 Column names follow GDAL's raw block information (`GetRawBlockInfo`, and the
-proposed `gdal mdim block-info` subcommand). The sections on writers, readers
+planned `gdal mdim chunk-info` subcommand). The sections on writers, readers
 and validation are informative: they record where the text was tested, not
 what it requires. Implementations are listed in
 [IMPLEMENTATIONS.md](../IMPLEMENTATIONS.md).

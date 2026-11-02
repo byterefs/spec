@@ -11,7 +11,7 @@
 Tables written from the starting draft carry `format_version` =
 `mdim-refs/0.2`. That name comes from a GDAL subcommand draft (`gdal mdim
 get-refs`) that is shelved, and that should return as `gdal mdim
-block-info`. It also ties the format to GDAL's multidimensional model,
+chunk-info`. It also ties the format to GDAL's multidimensional model,
 while a byterefs table describes bytes in files whatever model reads them.
 
 Brief question 15 asks what the identifier is, and whether mdim-refs/0.2
