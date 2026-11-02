@@ -1,7 +1,8 @@
 # 0001: Scope of byterefs
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-10-25
+- Accepted: 2026-11-02, ACCEPT_PR
 - Target version: byterefs/0.1
 
 ## Context

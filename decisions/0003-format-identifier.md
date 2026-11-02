@@ -1,8 +1,8 @@
 # 0003: Format identifier
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-02 (proposed)
-- Accepted: (date and link to the acceptance pull request, when accepted)
+- Accepted: 2026-11-02, ACCEPT_PR
 - Closes: brief question 15
 - Target version: byterefs/0.1
 
