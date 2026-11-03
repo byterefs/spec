@@ -1,7 +1,8 @@
 # 0001: Scope of byterefs
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-10-25
+- Accepted: on merge of [pull request 3](https://github.com/byterefs/spec/pull/3)
 - Target version: byterefs/0.1
 
 ## Context
