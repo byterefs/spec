@@ -32,6 +32,7 @@ covers, what is still open, and what each version must meet.
 | `conformance/` | the check, runnable in CI |
 | `decisions/` | numbered decision records, 0001 onwards |
 | `prior-art/` | the survey of existing forms, with sources |
+| `notes/` | non-normative positions and musings behind the decisions |
 | `IMPLEMENTATIONS.md` | who produces and reads byterefs, and at which version |
 
 ## Process
