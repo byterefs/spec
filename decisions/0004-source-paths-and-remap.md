@@ -1,8 +1,8 @@
 # 0004: Source paths and remap
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-03 (proposed)
-- Accepted: (date and link to the acceptance pull request, when accepted)
+- Accepted: on merge of [pull request 7](https://github.com/byterefs/spec/pull/7)
 - Closes: brief question 9, except relative paths (left open)
 - Target version: byterefs/0.1
 

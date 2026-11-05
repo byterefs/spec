@@ -39,7 +39,7 @@ One SQLite file per dataset. Names `meta`, `sources`, `arrays`, `placements`,
 
 | Table | Key | Columns |
 |---|---|---|
-| `meta` | `key` | `value`. Required: `format_version` = `byterefs/0.1`. Optional: `dataset` (bowerbird source id), `plan` (VRT URI the placements came from), `coord_attrs` |
+| `meta` | `key` | `value`. Required: `format_version` = `byterefs/0.1`. Optional: `default_target` (see Rules), `dataset` (bowerbird source id), `plan` (VRT URI the placements came from), `coord_attrs` |
 | `sources` | `source_id` | `source` TEXT UNIQUE, `size` BIGINT, `mtime` BIGINT, `etag` TEXT |
 | `arrays` | `array` | `kind` (`data`, `coord`), `storage` (`referenced`, `inline`, `affine`), `dims`, `shape`, `chunks` (JSON), `dtype` (numpy, e.g. `<i2`), `fill` (text), `codec` (JSON `{compressor, filters}`, Zarr v2 ids), `attrs` (JSON, CF), `affine` (JSON `{start, step}`), `values` (BLOB) |
 | `<array>` | `(source_id, dim_0..dim_{n-1})` | `present` INTEGER, `offset` BIGINT, `size` BIGINT, `info` TEXT, `data` BLOB |
@@ -57,9 +57,22 @@ from the plan; `chunks`, `dtype` and `codec` describe the sources.
   Preliminary and final versions of a granule are distinct sources; which one a
   dataset uses is decided by the plan.
 - **Remap at publish.** A published path is the source with the longest
-  matching `remap.prefix` for the chosen `target` replaced. Remapping is never
-  written into `sources`. This replaces the three ad hoc rewrites (Parquet
+  matching `remap.prefix` for the chosen `target` replaced; a source that no
+  rule matches is used verbatim. Remapping is never written into `sources`.
+  The rules travel with the published table, and only prefix rules are
+  allowed (no templates). This replaces the three ad hoc rewrites (Parquet
   edits, `rename_paths`, `ref_prefix`).
+- **Default target.** `meta.default_target` names the target a reader
+  applies when it is not told one; the empty string means verbatim. A
+  store meant for public use SHOULD name a default target under which
+  every source resolves without site access.
+- **A rule asserts byte identity.** A remap rule claims that the bytes at
+  the replacement are the bytes that were scanned. A producer SHOULD check
+  a sample of chunks through each target it publishes. `size` holds across
+  targets; `mtime` and `etag` hold for the verbatim source only.
+- **No confidentiality.** The format does not hide a local root. A producer
+  that must not disclose one publishes a copy of the store with a target
+  applied to `sources.source` and that target's rules dropped.
 - **Presence.** Block-info's three states: present and referenced
   (`present=1`, `offset` and `size` set), present and inline (`present=1`,
   `offset` NULL, `data` set), absent (`present=0`; readers use `fill`).
@@ -202,9 +215,10 @@ Anything else (`PREDICTOR=3`, other filters) is not mapped and stops ingest.
 | # | Change | Decision |
 |---|---|---|
 | 1 | Title, status and opening paragraphs rewritten for this repository; the wxylib/design notes removed | editorial |
-| 2 | `meta.format_version` is `byterefs/0.1` instead of `mdim-refs/0.2` | proposed in 0003 (brief question 15) |
+| 2 | `meta.format_version` is `byterefs/0.1` instead of `mdim-refs/0.2` | [0003](../decisions/0003-format-identifier.md) |
+| 3 | Remap: rules travel with the published table, prefix rules only, `meta.default_target`, byte-identity and no-confidentiality statements | [0004](../decisions/0004-source-paths-and-remap.md) |
 
-No other rule, table or column has changed. In particular, this text still
+No other rule, table or column has changed. Relative paths are still open (0004). In particular, this text still
 describes SQLite as the store; making the Parquet export the normative
 published encoding (decision 0001, brief question 7) is a later change with
 its own record.
