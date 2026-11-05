@@ -2,7 +2,7 @@
 
 - Status: accepted
 - Date: 2026-11-03 (proposed)
-- Accepted: on merge of the acceptance pull request (see its link in the git log of this file)
+- Accepted: on merge of [pull request 7](https://github.com/byterefs/spec/pull/7)
 - Closes: brief question 9, except relative paths (left open)
 - Target version: byterefs/0.1
 
