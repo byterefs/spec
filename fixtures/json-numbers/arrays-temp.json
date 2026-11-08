@@ -1,0 +1,13 @@
+{
+  "array": "temp",
+  "kind": "data",
+  "dtype": "<i2",
+  "fill": "-32768",
+  "attrs": {
+    "scale_factor": 0.007782219909131527,
+    "add_offset": 0.30000000000000004,
+    "valid_min_float32": 0.007799999788403511,
+    "units": "degC"
+  },
+  "affine": {"start": -79.95000000000000284, "step": 0.10000000000000001}
+}
