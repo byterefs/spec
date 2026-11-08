@@ -4,7 +4,7 @@ Who produces and reads byterefs tables, and at which version. Listed so the
 specification can be measured against them; none of them defines it.
 
 raad.virtualize writes `byterefs/0.1` (since mdsumner/raad.virtualize#62,
-2026-11-03); readers accept it and, during the transition, `mdim-refs/0.2`
+2026-11-03); zaro reads it and, during the transition, `mdim-refs/0.2`
 (decision 0003). The implementations that the
 starting draft (mdim-refs/0.2) was worked out against are listed in
 [BRIEF.md](BRIEF.md) section 9.
