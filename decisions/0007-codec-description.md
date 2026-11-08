@@ -1,8 +1,8 @@
 # 0007: Codec description is a Zarr V3 codec chain
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-08 (proposed)
-- Accepted: (date and link to the acceptance pull request, when accepted)
+- Accepted: 2026-11-08, on merge of [pull request 17](https://github.com/byterefs/spec/pull/17)
 - Closes: brief question 1; issue [#9](https://github.com/byterefs/spec/issues/9)
 - Target version: byterefs/0.1
 
@@ -37,7 +37,7 @@ in scope.
 4. **Both columns** (a V2 object and a V3 chain). This means two
    descriptions of one thing, which can disagree.
 
-## Decision (proposed: option 3)
+## Decision (option 3)
 
 - `arrays.codec` is a JSON array of codec objects
   `{"name": ..., "configuration": {...}}`, in encode order, as in the

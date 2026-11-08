@@ -41,7 +41,7 @@ One SQLite file per dataset. Names `meta`, `sources`, `arrays`, `placements`,
 |---|---|---|
 | `meta` | `key` | `value`. Required: `format_version` = `byterefs/0.1`. Optional: `default_target` (see Rules), `dataset` (bowerbird source id), `plan` (VRT URI the placements came from), `coord_attrs` |
 | `sources` | `source_id` | `source` TEXT UNIQUE, `size` BIGINT, `mtime` BIGINT, `etag` TEXT |
-| `arrays` | `array` | `kind` (`data`, `coord`), `storage` (`referenced`, `inline`, `affine`), `dims`, `shape`, `chunks` (JSON), `dtype` (numpy, e.g. `<i2`), `fill` (text), `codec` (JSON `{compressor, filters}`, Zarr v2 ids), `attrs` (JSON, CF), `affine` (JSON `{start, step}`), `values` (BLOB) |
+| `arrays` | `array` | `kind` (`data`, `coord`), `storage` (`referenced`, `inline`, `affine`), `dims`, `shape`, `chunks` (JSON), `dtype` (numpy, e.g. `<i2`), `fill` (text), `codec` (JSON, a Zarr V3 codec chain; see Rules), `attrs` (JSON, CF), `affine` (JSON `{start, step}`), `values` (BLOB) |
 | `<array>` | `(source_id, dim_0..dim_{n-1})` | `present` INTEGER, `offset` BIGINT, `size` BIGINT, `info` TEXT, `data` BLOB |
 | `placements` | `(array, dest)` | `source_id`, `source_array` (see [Source arrays](#source-arrays)), `src_offset`, `count`, `dest` (each a JSON array, one integer per global dimension: SourceSlab offset, SourceSlab count, DestSlab offset) |
 | `remap` | `(target, prefix)` | `replacement` |
@@ -68,14 +68,25 @@ from the plan; `chunks`, `dtype` and `codec` describe the sources.
   every source resolves without site access.
 - **A rule asserts byte identity.** A remap rule claims that the bytes at
   the replacement are the bytes that were scanned. A producer SHOULD check
-  a sample of chunks through each target it publishes. `size` holds across
-  targets; `mtime` and `etag` hold for the verbatim source only.
+  a sample of chunks through each target it publishes. `size`, where it
+  is set, holds across targets; `mtime` and `etag` hold for the verbatim
+  source only.
 - **No confidentiality.** The format does not hide a local root. A producer
   that must not disclose one publishes a copy of the store with a target
   applied to `sources.source` and that target's rules dropped.
-- **Presence.** Block-info's three states: present and referenced
-  (`present=1`, `offset` and `size` set), present and inline (`present=1`,
-  `offset` NULL, `data` set), absent (`present=0`; readers use `fill`).
+- **Presence.** Block-info's three states, plus one: present and
+  referenced (`present=1`, `offset` and `size` set), present and inline
+  (`present=1`, `offset` NULL, `data` set), absent (`present=0`; readers
+  use `fill`), and present as a whole object (`present=1`, `offset` 0,
+  `size` NULL: the whole object at `path`, length not recorded; a reader
+  fetches the whole object).
+- **Unknown sizes.** `size` NULL with any `offset` other than 0 is
+  invalid. A writer never stores a placeholder or sentinel as `size`: if a
+  source format holds one in place of a real length, the converter writes
+  NULL. A writer SHOULD record sizes it knows; a size from an object
+  listing is good enough. A writer of a form that needs a length (for
+  example Icechunk virtual chunk references) measures the object or
+  refuses the row; it never supplies a value of its own.
 - **Within-source keys carry the global rank.** A source of lower rank than
   the array (a 2D tile placed in a 3D stack, VRT `SourceTranspose -1,0,1`)
   has key 0 on each axis its placement adds. A placement may add leading
@@ -89,6 +100,38 @@ from the plan; `chunks`, `dtype` and `codec` describe the sources.
   `info` (compared as parsed pairs, not raw strings), across every
   ingest, not only within one scan. A source whose chunks disagree (a filter skipped on some chunks)
   cannot join the array; ingest fails rather than writing a mixed array.
+- **Codec chain.** `arrays.codec` is a JSON array of codec objects
+  `{"name": ..., "configuration": {...}}` in encode order, as in the
+  `codecs` member of Zarr V3 array metadata. It describes how the stored
+  bytes of every present, referenced chunk decode to the chunk's values.
+  The chain holds any array-to-array codecs first, then exactly one
+  array-to-bytes codec, then any bytes-to-bytes codecs.
+  `sharding_indexed` is not allowed in it. The `bytes` codec's `endian`
+  agrees with the byte order of `dtype` (and may be left out for a
+  one-byte `dtype`). Names are those of Zarr V3 and its registered
+  extensions; a reader that does not know a name refuses the array.
+  During byterefs/0.x `arrays.codec` may instead hold the Zarr V2 form
+  `{compressor, filters}`; readers tell the forms apart by JSON type (an
+  array is a V3 chain, an object is the V2 form). Writers SHOULD write
+  the V3 chain; readers MUST accept both.
+- **Sharded sources.** A sharded Zarr V3 source is chunked at its inner
+  chunks: one row per inner chunk, with `path` the shard object, `offset`
+  and `size` from the shard index, and the chunk key the inner chunk's
+  position in the source's grid of inner chunks. `arrays.chunks` is the
+  inner chunk shape and `arrays.codec` the inner codec chain; the shard
+  index's own codecs are not recorded. An empty index entry (offset and
+  size both 2^64 - 1) is a `present=0` row. After `sharding_indexed`, a
+  `crc32c` codec is allowed; any other bytes-to-bytes codec (a
+  whole-shard compressor) makes the array impossible to virtualise, and
+  a producer refuses it. Nested sharding is not allowed in byterefs/0.1.
+  The chunk-aligned plan rule applies to the inner chunk shape.
+- **JSON numbers round-trip.** A number written in a JSON column
+  (`attrs`, `affine`, `codec`), or as the text of `fill`, MUST read back
+  as the same IEEE 754 binary64 value that was written. 17 significant
+  digits always suffice; the shortest form that round-trips is
+  preferred. A single-precision attribute is written as its float32
+  value converted exactly to a double. Integers are written exactly. How
+  NaN and the infinities are written is not decided.
 - **Chunk-aligned plan.** Each placement has step 1, `src_offset` and `dest`
   divisible by `chunks`, and `dest + count` divisible by `chunks` unless it
   reaches the end of the global axis. Otherwise the mosaic has no single
@@ -228,6 +271,8 @@ Integer division is exact here because the chunk-aligned plan rule makes
 | `ENDIANNESS=LITTLE` or `BIG` | must agree with `dtype` | `bytes` endian |
 
 Anything else (`PREDICTOR=3`, other filters) is not mapped and stops ingest.
+The Zarr v3 column is the mapping into `arrays.codec`. The Zarr v2 column
+is informative, for writers of the V2 form accepted during 0.x.
 
 ## Writers and readers
 
@@ -311,6 +356,10 @@ Anything else (`PREDICTOR=3`, other filters) is not mapped and stops ingest.
 | 3 | Remap: rules travel with the published table, prefix rules only, `meta.default_target`, byte-identity and no-confidentiality statements | [0004](../decisions/0004-source-paths-and-remap.md) |
 | 4 | `placements.source_array` forms (`<name>`, `lift:`, `band:`, `band:/dir:`), in a new "Source arrays" section | [0005](../decisions/0005-source-array-forms.md) |
 | 5 | Overview levels as arrays with `overview_of`, `overview_factor` and `overview_resampling` attributes, in a new "Overview levels" section | [0006](../decisions/0006-overview-levels.md) |
+| 6 | `arrays.codec` is a Zarr V3 codec chain in encode order; the V2 form is accepted during 0.x | [0007](../decisions/0007-codec-description.md) |
+| 7 | A fourth presence state: whole object, `size` NULL with `offset` 0; no placeholder sizes | [0008](../decisions/0008-unknown-chunk-size.md) |
+| 8 | Sharded Zarr V3 sources are chunked at their inner chunks | [0009](../decisions/0009-sharded-zarr-sources.md) |
+| 9 | Numbers in JSON columns round-trip doubles exactly | [0010](../decisions/0010-json-numbers-round-trip.md) |
 
 No other rule, table or column has changed. Relative paths are still open (0004). In particular, this text still
 describes SQLite as the store; making the Parquet export the normative

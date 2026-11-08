@@ -6,7 +6,7 @@ Usage: check_json_numbers.py EXPECTED.json WRITTEN.json
 
 Exits 0 when both files hold the same structure and every number parses
 to the same IEEE 754 double; exits 1 and lists the differences otherwise.
-Proposed decision 0010.
+Decision 0010.
 """
 import json
 import sys
