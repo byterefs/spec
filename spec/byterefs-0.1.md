@@ -121,9 +121,44 @@ placement whose `dest` slab holds the key, then
 dim_i(source) = dim_i(global) - dest_i / c_i + src_offset_i / c_i
 ```
 
-looked up by the chunk table's primary key (`mr_chunk_sql()`). Measured
-under 1 ms at about 1M chunks, against 0.9 to 1.9 s through the view
-(design m15).
+looked up by the chunk table's primary key. Design m15 measured this
+under 1 ms at about 1M chunks, against 0.9 to 1.9 s through the view.
+
+Not yet in the reference implementation: raad.virtualize's `mr_chunk()`
+filters the view, so it and the readers built on it take the slow path.
+A `mr_chunk_sql()` function, and a batched form for the many keys a
+planner asks for, are planned there ([#8](https://github.com/byterefs/spec/issues/8)).
+
+Informative example, for an array `sst` with two dimensions, chunk shape
+`(:c0, :c1)` and global chunk key `(:k0, :k1)`. It returns the verbatim
+`path`; a remapped path applies the target's rules to it as in "Remap at
+publish".
+
+```sql
+WITH p AS (
+  SELECT source_id,
+         json_extract(src_offset, '$[0]') AS so0,
+         json_extract(src_offset, '$[1]') AS so1,
+         json_extract(count, '$[0]') AS n0,
+         json_extract(count, '$[1]') AS n1,
+         json_extract(dest, '$[0]') AS d0,
+         json_extract(dest, '$[1]') AS d1
+  FROM placements
+  WHERE array = 'sst'
+)
+SELECT c.present, s.source AS path, c.offset, c.size, c.info, c.data
+FROM p
+JOIN sst AS c
+  ON c.source_id = p.source_id
+ AND c.dim_0 = :k0 - p.d0 / :c0 + p.so0 / :c0
+ AND c.dim_1 = :k1 - p.d1 / :c1 + p.so1 / :c1
+JOIN sources AS s ON s.source_id = p.source_id
+WHERE :k0 * :c0 >= p.d0 AND :k0 * :c0 < p.d0 + p.n0
+  AND :k1 * :c1 >= p.d1 AND :k1 * :c1 < p.d1 + p.n1;
+```
+
+Integer division is exact here because the chunk-aligned plan rule makes
+`src_offset` and `dest` multiples of the chunk shape.
 
 ## Codec mapping
 
@@ -180,8 +215,8 @@ Anything else (`PREDICTOR=3`, other filters) is not mapped and stops ingest.
 ## Open questions
 
 1. The view filters on computed columns, so a single-chunk lookup through
-   it scans the array's rows. Answered for point lookups by the
-   placement-first join in "The view"; materialising `refs_<array>` as a
+   it scans the array's rows. For point lookups the placement-first join
+   in "The view" avoids this, once implementations use it; materialising `refs_<array>` as a
    keyed table remains an option for SQL-only readers that filter ranges
    through the view.
 2. Placements duplicate the VRT. The alternative is to keep the VRT as the only
