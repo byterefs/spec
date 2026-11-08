@@ -224,10 +224,11 @@ dim_i(source) = dim_i(global) - dest_i / c_i + src_offset_i / c_i
 looked up by the chunk table's primary key. Design m15 measured this
 under 1 ms at about 1M chunks, against 0.9 to 1.9 s through the view.
 
-Not yet in the reference implementation: raad.virtualize's `mr_chunk()`
-filters the view, so it and the readers built on it take the slow path.
-A `mr_chunk_sql()` function, and a batched form for the many keys a
-planner asks for, are planned there ([#8](https://github.com/byterefs/spec/issues/8)).
+The reference implementation has it: raad.virtualize's `mr_chunk_sql()`,
+`mr_chunk()` and `mr_chunks()`, a batched form for the many keys a planner
+asks for (mdsumner/raad.virtualize#98;
+[#8](https://github.com/byterefs/spec/issues/8) is closed). zaro's reader
+uses the batched form (hypertidy/zaro#19).
 
 Informative example, for an array `sst` with two dimensions, chunk shape
 `(:c0, :c1)` and global chunk key `(:k0, :k1)`. It returns the verbatim
@@ -318,8 +319,8 @@ is informative, for writers of the V2 form accepted during 0.x.
 
 1. The view filters on computed columns, so a single-chunk lookup through
    it scans the array's rows. For point lookups the placement-first join
-   in "The view" avoids this, once implementations use it; materialising `refs_<array>` as a
-   keyed table remains an option for SQL-only readers that filter ranges
+   in "The view" avoids this; materialising `refs_<array>` as a keyed
+   table remains an option for SQL-only readers that filter ranges
    through the view.
 2. Placements duplicate the VRT. The alternative is to keep the VRT as the only
    plan and compute the view in code; that loses SQL-only readers.
