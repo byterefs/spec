@@ -2,7 +2,7 @@
 
 - Status: accepted
 - Date: 2026-11-03 (proposed)
-- Accepted: 2026-11-08, on merge of the acceptance pull request
+- Accepted: 2026-11-08, on merge of [pull request 17](https://github.com/byterefs/spec/pull/17)
 - Closes: none in the brief; a gap found while indexing COG overviews
 - Target version: byterefs/0.1
 
