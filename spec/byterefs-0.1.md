@@ -124,6 +124,38 @@ written with its leading `/`. Readers that never open the source
 (kerchunk, Icechunk, Parquet readers) do not need `source_array`: the
 chunk rows already carry offsets.
 
+## Overview levels
+
+An overview level is an ordinary array of the store, with `kind` = `data`,
+whose `attrs` say which array it reduces (decision
+[0006](../decisions/0006-overview-levels.md)). No table or view changes.
+
+- `overview_of` (string, required): the array it is a reduced-resolution
+  view of, in the same store.
+- `overview_factor` (two or more numbers, required): the size ratio of
+  `overview_of` to this array along each dimension the reduction applies
+  to, in dimension order (`[y, x]` for a `[time, y, x]` array). Exact
+  ratios, not rounded, not assumed to be powers of 2.
+- `overview_resampling` (string, required): how the level was made
+  (`AVERAGE`, `NEAREST`, `CUBIC`, ...), or `unknown`. GDAL does not record
+  the method in a COG, so the producer states it from its own build.
+
+Rules:
+
+- A level has its own dimensions and its own coordinates, covering the
+  same extent as `overview_of`. Dimensions it does not reduce (time) are
+  shared.
+- A level has its own `dtype`, `fill`, `codec` and CF attributes. They are
+  usually those of `overview_of`, but readers must not assume it.
+- A level's sources may be the same files as `overview_of` (an in-file
+  pyramid, `band:<n>/dir:<k>`) or other files. Nothing in the table
+  depends on which.
+- The name `<array>_x<f>`, with `f` the rounded factor, is recommended,
+  not required; readers find levels through `overview_of`, not by name.
+- Catalog renders list `overview_of` arrays only, unless a level is asked
+  for by name. Zarr renders may lay levels out as sibling arrays or as a
+  multiscales group; either is a projection of the same rows.
+
 ## The view
 
 For array `a` with chunk shape `c`, a row of `refs_a` is a row of chunk table
@@ -278,6 +310,7 @@ Anything else (`PREDICTOR=3`, other filters) is not mapped and stops ingest.
 | 2 | `meta.format_version` is `byterefs/0.1` instead of `mdim-refs/0.2` | [0003](../decisions/0003-format-identifier.md) |
 | 3 | Remap: rules travel with the published table, prefix rules only, `meta.default_target`, byte-identity and no-confidentiality statements | [0004](../decisions/0004-source-paths-and-remap.md) |
 | 4 | `placements.source_array` forms (`<name>`, `lift:`, `band:`, `band:/dir:`), in a new "Source arrays" section | [0005](../decisions/0005-source-array-forms.md) |
+| 5 | Overview levels as arrays with `overview_of`, `overview_factor` and `overview_resampling` attributes, in a new "Overview levels" section | [0006](../decisions/0006-overview-levels.md) |
 
 No other rule, table or column has changed. Relative paths are still open (0004). In particular, this text still
 describes SQLite as the store; making the Parquet export the normative
