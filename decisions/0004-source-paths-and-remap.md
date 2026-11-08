@@ -97,7 +97,7 @@ Option 2, with three additions for the published encoding.
   `public` in `config/bran.sh`); `verify-published` already reads each
   form back through its target.
 - Readers (wxy-refs, arrir-layout, zaro): apply `default_target` when no
-  target is given.
+  target is given. zaro: done (hypertidy/zaro#15).
 - The specification gives a short informative SQL example that applies
   the rules, so a plain DuckDB reader gets resolvable paths.
 - Fixtures: two remap targets over one store, a source that no rule
