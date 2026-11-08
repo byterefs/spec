@@ -1,8 +1,8 @@
 # 0009: Sharded Zarr V3 arrays as sources
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-08 (proposed)
-- Accepted: (date and link to the acceptance pull request, when accepted)
+- Accepted: 2026-11-08, on merge of [pull request 17](https://github.com/byterefs/spec/pull/17)
 - Closes: issue [#10](https://github.com/byterefs/spec/issues/10); part of brief question 13
 - Target version: byterefs/0.1
 
@@ -37,7 +37,7 @@ codecs as a Zarr V3 chain.
 3. **Leave sharded sources out of 0.1.** This would exclude GeoZarr
    products that are already in use.
 
-## Decision (proposed: option 1)
+## Decision (option 1)
 
 - A sharded Zarr V3 source is chunked at its inner chunks. Each inner
   chunk is one row:

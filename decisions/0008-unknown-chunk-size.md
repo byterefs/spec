@@ -1,8 +1,8 @@
 # 0008: Rows whose size is not known
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-08 (proposed)
-- Accepted: (date and link to the acceptance pull request, when accepted)
+- Accepted: 2026-11-08, on merge of [pull request 17](https://github.com/byterefs/spec/pull/17)
 - Closes: issue [#12](https://github.com/byterefs/spec/issues/12); touches brief questions 3 and 8
 - Target version: byterefs/0.1
 
@@ -31,7 +31,7 @@ place of a real length. A conversion that copies a placeholder into
    This keeps conversions lossless and honest. It weakens a few checks for
    those rows only.
 
-## Decision (proposed: option 3)
+## Decision (option 3)
 
 - A present, referenced row with `offset = 0` and `size` NULL refers to
   the whole object at `path`, with its length not recorded. A reader

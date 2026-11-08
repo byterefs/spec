@@ -1,6 +1,6 @@
 # json-numbers
 
-Fixture for proposed decision
+Fixture for decision
 [0010](../../decisions/0010-json-numbers-round-trip.md): numbers in JSON
 columns round-trip doubles exactly.
 

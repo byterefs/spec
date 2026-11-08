@@ -1,8 +1,8 @@
 # 0006: Overview levels
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-03 (proposed)
-- Accepted: (date and link to the acceptance pull request, when accepted)
+- Accepted: 2026-11-08, on merge of [pull request 17](https://github.com/byterefs/spec/pull/17)
 - Closes: none in the brief (new question: reduced-resolution levels)
 - Target version: byterefs/0.1 (attributes only; no schema change)
 
@@ -38,7 +38,7 @@ further cases came up and shape the decision:
    `multiscales` attribute. byterefs has no groups, and multiscales is a
    layout choice of Zarr renders, not of the table.
 
-## Decision (proposed: option 1)
+## Decision (option 1)
 
 An overview level is an array with `kind` = `data` whose `attrs` carry:
 

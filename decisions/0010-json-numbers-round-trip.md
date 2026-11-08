@@ -1,8 +1,8 @@
 # 0010: Numbers in JSON columns round-trip doubles exactly
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-08 (proposed)
-- Accepted: (date and link to the acceptance pull request, when accepted)
+- Accepted: 2026-11-08, on merge of [pull request 17](https://github.com/byterefs/spec/pull/17)
 - Closes: issue [#11](https://github.com/byterefs/spec/issues/11)
 - Target version: byterefs/0.1
 
@@ -35,7 +35,7 @@ are written.
 3. **Store numbers as strings** in JSON. That breaks every JSON reader
    that expects CF attributes as numbers.
 
-## Decision (proposed: option 2)
+## Decision (option 2)
 
 - A number written in a JSON column (`attrs`, `affine`, `codec`), or as
   the text of `fill`, MUST read back as the same IEEE 754 binary64 value

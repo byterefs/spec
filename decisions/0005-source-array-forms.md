@@ -1,8 +1,8 @@
 # 0005: Forms of `placements.source_array`
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-03 (proposed)
-- Accepted: (date and link to the acceptance pull request, when accepted)
+- Accepted: 2026-11-08, on merge of [pull request 17](https://github.com/byterefs/spec/pull/17)
 - Closes: none in the brief; a gap found while indexing COG overviews
 - Target version: byterefs/0.1
 
@@ -43,7 +43,7 @@ rows already carry offsets.
    not invalidate its levels together, and `sources.size`/`mtime` would be
    measured against a string that is not a file.
 
-## Decision (proposed: option 2)
+## Decision (option 2)
 
 `source_array` takes one of these forms; anything else is an error for a
 reader that rebuilds a plan.
