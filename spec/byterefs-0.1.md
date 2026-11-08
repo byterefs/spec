@@ -143,7 +143,7 @@ Anything else (`PREDICTOR=3`, other filters) is not mapped and stops ingest.
 |---|---|---|
 | GDAL vector (OGR) | open the SQLite file; `refs_<array>` is a layer | works with stock GDAL |
 | kerchunk Parquet (D) | `mr_write_kerchunk_parquet()` -> `blocklist::write_kerchunk_parquet()` | works; read by GDAL as `ZARR:"/vsikerchunk_parquet_ref/{dir}"` |
-| zaro | `zaro("mdimrefs://store.sqlite", target = "public")` | works; serves Zarr v2 keys from the view |
+| zaro | `zaro("byterefs://store.sqlite")` (alias `mdimrefs://`; `target =` overrides) | works; serves Zarr v2 keys from the view; applies `meta.default_target` (hypertidy/zaro#15) |
 | Icechunk (C) | bulk-load the view rows as virtual chunk refs | not started |
 | block-info producer | `blockinfo_scan.py` (stock `GetRawBlockInfo`) now; `gdal mdim get-refs` output is the same rows | Python only; no R binding of `GetRawBlockInfo` exists |
 
