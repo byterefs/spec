@@ -43,7 +43,7 @@ One SQLite file per dataset. Names `meta`, `sources`, `arrays`, `placements`,
 | `sources` | `source_id` | `source` TEXT UNIQUE, `size` BIGINT, `mtime` BIGINT, `etag` TEXT |
 | `arrays` | `array` | `kind` (`data`, `coord`), `storage` (`referenced`, `inline`, `affine`), `dims`, `shape`, `chunks` (JSON), `dtype` (numpy, e.g. `<i2`), `fill` (text), `codec` (JSON `{compressor, filters}`, Zarr v2 ids), `attrs` (JSON, CF), `affine` (JSON `{start, step}`), `values` (BLOB) |
 | `<array>` | `(source_id, dim_0..dim_{n-1})` | `present` INTEGER, `offset` BIGINT, `size` BIGINT, `info` TEXT, `data` BLOB |
-| `placements` | `(array, dest)` | `source_id`, `source_array`, `src_offset`, `count`, `dest` (each a JSON array, one integer per global dimension: SourceSlab offset, SourceSlab count, DestSlab offset) |
+| `placements` | `(array, dest)` | `source_id`, `source_array` (see [Source arrays](#source-arrays)), `src_offset`, `count`, `dest` (each a JSON array, one integer per global dimension: SourceSlab offset, SourceSlab count, DestSlab offset) |
 | `remap` | `(target, prefix)` | `replacement` |
 | `refs_<array>` (view) | `dim_0..dim_{n-1}` | `present`, `path`, `offset`, `size`, `info`, `data` |
 
@@ -98,6 +98,31 @@ from the plan; `chunks`, `dtype` and `codec` describe the sources.
   source scan, because the mosaic VRT drops some (time `units` for OISST).
 - **Publish in DELETE journal mode** (checkpoint, then `journal_mode=DELETE`),
   so a read-only remote copy opens without WAL sidecars.
+
+## Source arrays
+
+`placements.source_array` names what the plan reads from the source. It
+takes one of these forms; anything else is an error for a reader that
+rebuilds a plan (decision [0005](../decisions/0005-source-array-forms.md)).
+
+- `<name>`: the array `/<name>` of a multidimensional source. A leading `/`
+  is optional.
+- `lift:<name>`: the array `/<name>`, placed with one new leading axis of
+  length 1 (VRT `SourceTranspose` of `-1,0,1,...`). More leading axes and
+  any permutation of the source's own axes are not allowed, as in the
+  rule "Within-source keys carry the global rank".
+- `band:<n>`: band `n` (1-based) of a raster source's full-resolution
+  image. When the array has more dimensions than 2, the plan adds the
+  leading axes, as for `lift:`.
+- `band:<n>/dir:<k>`: band `n` of TIFF directory `k` (1-based, GDAL's
+  `GTIFF_DIR:<k>:` numbering, where 1 is the full-resolution image). Used
+  for overview levels. The source stays the file.
+
+The prefixes `band:`, `lift:` and the suffix `/dir:` are reserved; a
+multidimensional array whose own name starts with `band:` or `lift:` is
+written with its leading `/`. Readers that never open the source
+(kerchunk, Icechunk, Parquet readers) do not need `source_array`: the
+chunk rows already carry offsets.
 
 ## The view
 
@@ -252,6 +277,7 @@ Anything else (`PREDICTOR=3`, other filters) is not mapped and stops ingest.
 | 1 | Title, status and opening paragraphs rewritten for this repository; the wxylib/design notes removed | editorial |
 | 2 | `meta.format_version` is `byterefs/0.1` instead of `mdim-refs/0.2` | [0003](../decisions/0003-format-identifier.md) |
 | 3 | Remap: rules travel with the published table, prefix rules only, `meta.default_target`, byte-identity and no-confidentiality statements | [0004](../decisions/0004-source-paths-and-remap.md) |
+| 4 | `placements.source_array` forms (`<name>`, `lift:`, `band:`, `band:/dir:`), in a new "Source arrays" section | [0005](../decisions/0005-source-array-forms.md) |
 
 No other rule, table or column has changed. Relative paths are still open (0004). In particular, this text still
 describes SQLite as the store; making the Parquet export the normative
