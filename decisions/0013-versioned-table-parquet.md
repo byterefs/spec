@@ -1,8 +1,8 @@
 # 0013: Holding the byte-ref table with history: Parquet fragments and a manifest, Lance later
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-13 (proposed)
-- Accepted: (date and link to the acceptance pull request, when accepted)
+- Accepted: 2026-11-13, proposed in [pull request 24](https://github.com/byterefs/spec/pull/24); accepted on merge of the pull request that sets this status
 - Closes: none (brief section 5 puts versioning and transactions out of
   scope; this records the producer practice that sits beside the format)
 - Target version: byterefs/0.1 (non-normative for 0.1)
