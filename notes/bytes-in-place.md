@@ -365,6 +365,100 @@ only; an append mode should use 1.
   ref can point anywhere, including a private bucket. mdim-refs has no
   equivalent; the remap target is the natural place for "allowed prefixes".
 
+#### Lance vs Parquet as the refs container: the GHRSST benchmark (21 Nov 2026)
+
+Michael's benchmark (21 Nov; full notes are in the working project) on
+the published GHRSST MUR COG store
+(`ausantarctic-scratch/ghrsst/ghrsst-mur-cog-analysed_sst` on
+source.coop): byterefs/0.1, 22,799,520 refs, chunks 1 x 512 x 512,
+every chunk present. Both formats were served from a local S3 look-alike
+that logs requests, so request and byte counts are exact and times are
+modelled. pylance 14.0.3, pyarrow 26.0.1. It supports
+[decision 0013](../decisions/0013-versioned-table-parquet.md)
+(Parquet now, Lance for held bytes first) and adds the refs-side numbers
+0013 left unmeasured.
+
+Megabytes fetched (requests) per lookup:
+
+| Query (chunks) | Lance, take by row | Parquet as published | Parquet tuned |
+| --- | --- | --- | --- |
+| Point, cold open (1) | 0.16 (13) | 10.42 (6) | 3.52 (8) |
+| Point, warm (1) | 0.10 (10) | 10.26 (2) | 0.18 (2) |
+| 30-day cube, warm (720) | 0.62 (10) | 10.26 (2) | 0.83 (2) |
+| Full series at one chunk (8,920) | 157.6 (131) | 222.5 (9) | 197.8 (7) |
+
+"As published" is snappy with 22 row groups of about 1 million rows.
+"Tuned" is zstd with 20,448 rows per group (8 time steps), 1,115 groups
+and a 1.6 MB footer.
+
+What it settles:
+
+- **The first finding is about our Parquet, not Lance.** The published
+  file costs about 10 MB for any lookup, even one chunk. About 20,000 rows
+  per row group brings a warm lookup to 0.18 MB. That is a producer
+  setting in the raad.virtualize export, worth writing into the spec as
+  producer practice. A republish with a lookup against the real
+  source.coop is the follow-up.
+- **Warm, Lance and tuned Parquet are level.** Lance's refs-side edge is
+  the cold open (0.16 MB against 3.5 MB) and not needing tuning.
+- **Row order beats container choice.** The time-major series reads 158
+  to 222 MB in either format. Sorted space-major (`dim_1, dim_2, dim_0`)
+  the same query is 0.45 MB warm in either. If time series matter, the fix
+  is a second ordering of the table, not a different container.
+- **Index choice in Lance.** A dense C-ordered table needs none: row
+  position is the chunk key. A BTree on a derived linear key works for
+  sparse tables but costs 135 MB on top of 226 MB of data. One BTree per
+  `dim_*` column is the wrong design (3 to 14 MB per lookup). Either
+  working route is producer practice computable from `arrays.shape` and
+  `arrays.chunks`; no new normative column.
+- **Carry `source_id`, not `path`, in a Lance chunk table.** Reordered
+  space-major, the repeated path strings grew the Lance table to 875 MB
+  against 169 MB for Parquet (zstd, dictionary).
+- **Held bytes: packing wins on request count.** 2,920 chunks (489 MB)
+  took 2,920 range reads and 13 to 18 s from the real source.coop. From a
+  separate Lance holdings table: 31 to 41 requests, 6 to 8 s modelled.
+  For 4 chunks, one object per chunk wins (a cold Lance open is 7 to 8
+  sequential requests first). A plain `large_binary` column was as fast as
+  blob v2 at 170 KB chunks and DuckDB can read it, which confirms the
+  workaround above.
+- **Mixed held and linked works without a status column.** 240 chunks
+  asked, 120 held: one holdings query (7 requests, 20.4 MB), one refs
+  query for the keys that did not come back (8 requests, 0.8 MB), then 120
+  origin reads. A missing holdings row means not held; a missing refs row
+  means unknown (0012). Separate tables, no collision.
+
+Caveats to carry with the numbers:
+
+- **The cold-open comparison is against one big Parquet file.** The 1.6 MB
+  footer comes from 1,115 row groups in a single file. The 0013 design is
+  fragments plus a manifest, where a reader opens a small manifest and one
+  fragment footer. That was not measured, and it is the fair comparison;
+  Lance's cold-open lead is probably smaller against it.
+- **Positional take is flattered by a dense store.** GHRSST has every
+  chunk. Sea ice with gaps and the ESA CCI 5-day series do not, and there
+  Lance pays for the key index (135 MB here, and 0.30 MB in 19 requests
+  for a cold point).
+- **Do not cite the scattered held-bytes Parquet number yet.** For 120
+  scattered chunks Parquet (16-row groups) fetched 479 MB where Lance
+  fetched 20 MB. Only pyarrow was tested, and it coalesces ranges across
+  the gaps. But it is not only a reader quirk: 120 random rows land in
+  roughly half of the 183 row groups, so a reader that fetches exactly
+  the groups it needs would still move something like 240 MB (estimate,
+  not measured). Getting Parquet near 20 MB needs smaller groups or a
+  page-index reader. Retest with DuckDB before quoting any figure.
+- **Times are modelled.** Only the origin range reads crossed a real
+  network. One store, one fragment, default read settings; no appends,
+  versions or compaction, so nothing here measures Lance history or
+  lookups across many fragments. Holdings were 489 MB only.
+- **The m16 stance was held bytes in the same row as the ref.** This test
+  used a separate holdings table keyed by chunk key plus source path,
+  which fits layered holdings (a child table wins key by key) better.
+  Bytes in a column of the 22.8 million row table were not tested.
+
+Not started: the fragmented-Parquet cold open, a DuckDB and R retest, a
+sparse store, appends over several versions with a pinned refs version,
+and the question of publishing a space-major second ordering.
+
 ### Other index forms, ranked (23 Oct 2026)
 
 Michael asked (23 Oct) for STAC as an output and what else to consider.
